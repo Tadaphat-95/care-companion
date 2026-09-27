@@ -29,15 +29,15 @@ export default async function CompanionProfilePage({ params }: { params: Promise
   // ข้อมูล Mock สถิติ
   const mockStats = [
     { rating: '4.9', count: 32, exp: '5 ปี' },
-    { rating: '4.8', count: 46, exp: '3 ปี' },
+    { rating: '5.0', count: 46, exp: '3 ปี' },
     { rating: '4.8', count: 24, exp: '6 ปี' },
     { rating: '4.9', count: 38, exp: '4 ปี' },
-    { rating: '4.8', count: 12, exp: '2 ปี' },
+    { rating: '5.0', count: 12, exp: '2 ปี' },
   ]
   const statIndex = (id.charCodeAt(0) + id.charCodeAt(id.length - 1)) % mockStats.length
   const stat = mockStats[statIndex]
 
-  // 🔥 ข้อมูล Mock รีวิวแบบแบ่งเซ็ตตามคาแรคเตอร์
+  // ข้อมูล Mock รีวิวแบบแบ่งเซ็ตตามคาแรคเตอร์
   const mockReviewSets = [
     [ // Set 0: สายดูแลผู้สูงอายุ (เหมาะกับป้าสมศรี)
       { id: 1, reviewer: "คุณแม่วิไลรัตน์", avatar: "ว", rating: 5, date: "2 วันที่แล้ว", comment: "บริการดีมากค่ะ ใจเย็น ช่วยพยุงคุณแม่ตอนขึ้นลงรถตลอดเวลา คุยเก่งด้วย ทำให้การเดินทางไปโรงพยาบาลไม่น่าเบื่อเลย แนะนำมากๆ" },
@@ -64,19 +64,13 @@ export default async function CompanionProfilePage({ params }: { params: Promise
     ]
   ]
 
-  // 🎯 เลือกรีวิวตามชื่อ (Personality Matching)
+  // เลือกรีวิวตามชื่อ (Personality Matching)
   const fullName = comp.users?.full_name || '';
-  let reviewIndex = 3; // ค่าเริ่มต้นถ้าไม่ใช่ 3 คนนี้
-  
-  if (fullName.includes('สมศรี')) {
-    reviewIndex = 0;
-  } else if (fullName.includes('สมชาย')) {
-    reviewIndex = 1;
-  } else if (fullName.includes('จอย')) {
-    reviewIndex = 2;
-  } else {
-    reviewIndex = fullName.length % mockReviewSets.length;
-  }
+  let reviewIndex = 3; 
+  if (fullName.includes('สมศรี')) reviewIndex = 0;
+  else if (fullName.includes('สมชาย')) reviewIndex = 1;
+  else if (fullName.includes('จอย')) reviewIndex = 2;
+  else reviewIndex = fullName.length % mockReviewSets.length;
   
   const currentReviews = mockReviewSets[reviewIndex];
 
@@ -161,7 +155,7 @@ export default async function CompanionProfilePage({ params }: { params: Promise
               </div>
             </section>
 
-            {/* 🔥 กล่องรีวิว */}
+            {/* กล่องรีวิว */}
             <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
               <h3 className="text-lg font-bold text-slate-900 flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
                 <span className="flex items-center gap-2">
@@ -213,15 +207,17 @@ export default async function CompanionProfilePage({ params }: { params: Promise
                 <div className="flex justify-between">
                   <span className="text-slate-500">คะแนนความพึงพอใจ:</span>
                   <span className="font-bold text-slate-900 flex items-center gap-1">
-                    <span className="text-amber-500">★</span> {stat.rating} / 4.8
+                    <span className="text-amber-500">★</span> {stat.rating} / 5.0
                   </span>
                 </div>
               </div>
 
-              <Link href="/customer" className="w-full flex items-center justify-center gap-2 bg-[#1d4ed8] text-white py-3.5 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-blue-500/30">
+              {/* 🔥 จุดที่คุณให้แก้: ลิงก์ปุ่มจองแบบเป๊ะๆ */}
+              <Link href={`/book/${comp.user_id}`} className="w-full flex items-center justify-center gap-2 bg-[#1d4ed8] text-white py-3.5 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-blue-500/30">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 จองผู้ช่วยท่านนี้
               </Link>
+              
             </div>
           </div>
         </div>

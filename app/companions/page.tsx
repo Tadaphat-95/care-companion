@@ -6,7 +6,6 @@ import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-// แยก Component ออกมาเพื่อให้รองรับ Suspense ของ Next.js 15
 function CompanionsContent() {
   const [companions, setCompanions] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -14,7 +13,7 @@ function CompanionsContent() {
   
   const searchParams = useSearchParams()
   const router = useRouter()
-  const categoryFilter = searchParams.get('category') // ดึงหมวดหมู่ที่กดมาจากหน้าแรก
+  const categoryFilter = searchParams.get('category')
   
   const supabase = createClient()
 
@@ -30,29 +29,44 @@ function CompanionsContent() {
     fetchCompanions()
   }, [])
 
-  // 🔥 Logic การกรอง: เช็คทั้งชื่อ (Search Box) และหมวดหมู่ (URL Query)
+  // 🔥 อัปเกรด Logic การกรอง: จับคู่ Category กับ Tag (Skills) เฉพาะทาง
   const filteredCompanions = companions.filter((comp) => {
     const name = comp.users?.full_name?.toLowerCase() || ''
     const bio = comp.bio?.toLowerCase() || ''
-    const skills = comp.skills?.join(' ').toLowerCase() || ''
+    const skillsText = (comp.skills || []).join(' ').toLowerCase()
+    const allText = `${name} ${bio} ${skillsText}`
     
-    // 1. เช็คคำค้นหา
-    const matchName = name.includes(searchQuery.toLowerCase())
+    // 1. เช็คคำค้นหาทั่วไปจากช่อง Search
+    const matchSearch = allText.includes(searchQuery.toLowerCase())
     
-    // 2. เช็คหมวดหมู่ (ถ้ามี)
-    const matchCategory = categoryFilter 
-      ? bio.includes(categoryFilter.toLowerCase()) || skills.includes(categoryFilter.toLowerCase())
-      : true
+    // 2. เช็คหมวดหมู่ (ถ้ามีการกดมาจากหน้าแรก)
+    let matchCategory = true
+    if (categoryFilter) {
+      // 🧠 Dictionary จับคู่หมวดหมู่กับ Tag/Keyword ที่เกี่ยวข้อง
+      const categoryKeywords: Record<string, string[]> = {
+        'โรงพยาบาล': ['โรงพยาบาล', 'พยาบาล', 'ผู้ป่วย', 'ปฐมพยาบาล', 'คลินิก', 'แพทย์'],
+        'ธนาคาร': ['ธนาคาร', 'การเงิน', 'ธุรกรรม', 'กดเงิน'],
+        'ราชการ': ['ราชการ', 'เอกสาร', 'อำเภอ', 'เขต', 'วีซ่า', 'ต่ออายุ'],
+        'ซื้อของ': ['ซื้อของ', 'ตลาด', 'ช้อปปิ้ง', 'ยกของ', 'แม่บ้าน', 'ซูเปอร์'],
+        'ทั่วไป': ['ทั่วไป', 'เพื่อน', 'ทำบุญ', 'คาเฟ่', 'เที่ยว', 'เพื่อนคุย', 'ขับรถ']
+      }
 
-    return matchName && matchCategory
+      // ดึงกลุ่มคำของหมวดหมู่นั้นออกมา ถ้าไม่เจอให้ใช้คำตั้งต้น
+      const keywordsToMatch = categoryKeywords[categoryFilter] || [categoryFilter]
+      
+      // ตรวจสอบว่าใน bio หรือ tag สกิล มีคำพวกนี้ซ่อนอยู่ไหม (อย่างน้อย 1 คำ)
+      matchCategory = keywordsToMatch.some(kw => allText.includes(kw.toLowerCase()))
+    }
+
+    return matchSearch && matchCategory
   })
 
   const mockStats = [
     { rating: '4.9', count: 32, exp: '5 ปี' },
-    { rating: '4.8', count: 46, exp: '3 ปี' },
+    { rating: '5.0', count: 46, exp: '3 ปี' },
     { rating: '4.8', count: 24, exp: '6 ปี' },
     { rating: '4.9', count: 38, exp: '4 ปี' },
-    { rating: '4.8', count: 12, exp: '2 ปี' },
+    { rating: '5.0', count: 12, exp: '2 ปี' },
   ]
 
   const clearCategory = () => {
@@ -195,7 +209,6 @@ function CompanionsContent() {
   )
 }
 
-// หุ้มตัวหลักด้วย Suspense เพื่อแก้ Error Next.js
 export default function Page() {
   return (
     <Suspense fallback={

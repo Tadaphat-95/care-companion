@@ -4,9 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   })
 
   const supabase = createServerClient(
@@ -30,13 +28,14 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const currentPath = request.nextUrl.pathname
 
-  // 1. หน้าที่ Guest เข้าได้ (ใช้ RegExp เช็คให้คลุมถึง sub-path ด้วย)
+  // 🔥 อัปเดต: เพิ่ม currentPath.startsWith('/book') เข้าไปให้ Guest เข้าหน้าจองได้
   const isPublicRoute = 
     currentPath === '/' || 
-    currentPath.startsWith('/companions') || // คลุมทั้ง /companions และ /companions/[id]
-    currentPath.startsWith('/auth')
+    currentPath.startsWith('/companions') || 
+    currentPath.startsWith('/auth') ||
+    currentPath.startsWith('/book')
 
-  // 🛡️ กฎที่ 1: ถ้าเป็น Guest แล้วพยายามเข้าหน้าส่วนตัว -> เตะไปหน้าแรก
+  // 🛡️ กฎที่ 1: ถ้าเป็น Guest แล้วเข้าหน้าส่วนตัว -> เตะไปหน้าแรก
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/', request.url))
   }
@@ -51,12 +50,10 @@ export async function middleware(request: NextRequest) {
 
     const role = userData?.role || 'customer' 
 
-    // ถ้า Login แล้ว แต่อยู่หน้าแรก (/) ให้เด้งเข้า Dashboard อัตโนมัติ
     if (currentPath === '/') {
       return NextResponse.redirect(new URL(`/${role}`, request.url))
     }
 
-    // ดักทางคนข้ามเส้น
     const isCustomerDashboard = currentPath.startsWith('/customer')
     const isCompanionDashboard = currentPath.startsWith('/companion') && !currentPath.startsWith('/companions')
     const isAdminDashboard = currentPath.startsWith('/admin')
