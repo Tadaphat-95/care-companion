@@ -1,22 +1,22 @@
+// app/layout.tsx (ตัวอย่างการวางโค้ด)
 import type { Metadata } from "next";
-import { Prompt } from "next/font/google"; // ใช้ฟอนต์ Prompt เพราะมีหัว อ่านง่ายสำหรับคนไทย
 import "./globals.css";
-
-const promptFont = Prompt({
-  weight: ['400', '500', '700'],
-  subsets: ["thai", "latin"],
-  variable: "--font-prompt",
-});
+import RoleSwitcher from "@/components/RoleSwitcher"; // 👈 1. Import เข้ามา
 
 export const metadata: Metadata = {
-  title: "Care Companion | อุ่นใจไปด้วยกัน",
-  description: "แพลตฟอร์มผู้ช่วยร่วมเดินทางสำหรับผู้สูงอายุและผู้ที่ต้องการความช่วยเหลือ",
+  title: "Care Companion",
+  description: "เพื่อนร่วมทางที่คุณไว้วางใจ",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="th" className={`${promptFont.variable} antialiased`}>
-      <body className="min-h-screen flex flex-col font-sans">
+    <html lang="th">
+      <body className="antialiased">
+        <RoleSwitcher /> {/* 👈 2. วางไว้บนสุดตรงนี้เลย! */}
         {children}
       </body>
     </html>

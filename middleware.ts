@@ -1,75 +1,34 @@
 // middleware.ts
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return request.cookies.get(name)?.value },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options })
-          response.cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options })
-          response.cookies.set({ name, value: '', ...options })
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
+export function middleware(request: NextRequest) {
   const currentPath = request.nextUrl.pathname
+  // อ่านค่า role จาก cookie
+  const role = request.cookies.get('mock_role')?.value || 'guest'
 
-  // 🔥 อัปเดต: เพิ่ม currentPath.startsWith('/book') เข้าไปให้ Guest เข้าหน้าจองได้
+  // อนุญาตให้หน้าพวกนี้เข้าได้อิสระ
   const isPublicRoute = 
     currentPath === '/' || 
     currentPath.startsWith('/companions') || 
-    currentPath.startsWith('/auth') ||
-    currentPath.startsWith('/book')
+    currentPath.startsWith('/book') ||
+    currentPath.startsWith('/auth')
 
-  // 🛡️ กฎที่ 1: ถ้าเป็น Guest แล้วเข้าหน้าส่วนตัว -> เตะไปหน้าแรก
-  if (!user && !isPublicRoute) {
+  // ถ้าเป็นหน้าลับ แต่ role ไม่ตรง ให้เตะกลับไปหน้าแรก
+  if (currentPath.startsWith('/customer') && role !== 'customer') {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+  
+  // ระวัง path /companions (มี s) อย่าให้สับสนกับ /companion
+  if (currentPath.startsWith('/companion') && !currentPath.startsWith('/companions') && role !== 'companion') {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+  
+  if (currentPath.startsWith('/admin') && role !== 'admin') {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // 🛡️ กฎที่ 2: ถ้า Login แล้ว
-  if (user) {
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const role = userData?.role || 'customer' 
-
-    if (currentPath === '/') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url))
-    }
-
-    const isCustomerDashboard = currentPath.startsWith('/customer')
-    const isCompanionDashboard = currentPath.startsWith('/companion') && !currentPath.startsWith('/companions')
-    const isAdminDashboard = currentPath.startsWith('/admin')
-
-    if (isCustomerDashboard && role !== 'customer') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url))
-    }
-    if (isCompanionDashboard && role !== 'companion') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url))
-    }
-    if (isAdminDashboard && role !== 'admin') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url))
-    }
-  }
-
-  return response
+  // ปล่อยผ่านปกติ
+  return NextResponse.next()
 }
 
 export const config = {

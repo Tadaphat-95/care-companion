@@ -29,20 +29,17 @@ function CompanionsContent() {
     fetchCompanions()
   }, [])
 
-  // 🔥 อัปเกรด Logic การกรอง: จับคู่ Category กับ Tag (Skills) เฉพาะทาง
+  // Logic การกรอง: จับคู่ Category กับ Tag
   const filteredCompanions = companions.filter((comp) => {
     const name = comp.users?.full_name?.toLowerCase() || ''
     const bio = comp.bio?.toLowerCase() || ''
     const skillsText = (comp.skills || []).join(' ').toLowerCase()
     const allText = `${name} ${bio} ${skillsText}`
     
-    // 1. เช็คคำค้นหาทั่วไปจากช่อง Search
     const matchSearch = allText.includes(searchQuery.toLowerCase())
     
-    // 2. เช็คหมวดหมู่ (ถ้ามีการกดมาจากหน้าแรก)
     let matchCategory = true
     if (categoryFilter) {
-      // 🧠 Dictionary จับคู่หมวดหมู่กับ Tag/Keyword ที่เกี่ยวข้อง
       const categoryKeywords: Record<string, string[]> = {
         'โรงพยาบาล': ['โรงพยาบาล', 'พยาบาล', 'ผู้ป่วย', 'ปฐมพยาบาล', 'คลินิก', 'แพทย์'],
         'ธนาคาร': ['ธนาคาร', 'การเงิน', 'ธุรกรรม', 'กดเงิน'],
@@ -50,11 +47,7 @@ function CompanionsContent() {
         'ซื้อของ': ['ซื้อของ', 'ตลาด', 'ช้อปปิ้ง', 'ยกของ', 'แม่บ้าน', 'ซูเปอร์'],
         'ทั่วไป': ['ทั่วไป', 'เพื่อน', 'ทำบุญ', 'คาเฟ่', 'เที่ยว', 'เพื่อนคุย', 'ขับรถ']
       }
-
-      // ดึงกลุ่มคำของหมวดหมู่นั้นออกมา ถ้าไม่เจอให้ใช้คำตั้งต้น
       const keywordsToMatch = categoryKeywords[categoryFilter] || [categoryFilter]
-      
-      // ตรวจสอบว่าใน bio หรือ tag สกิล มีคำพวกนี้ซ่อนอยู่ไหม (อย่างน้อย 1 คำ)
       matchCategory = keywordsToMatch.some(kw => allText.includes(kw.toLowerCase()))
     }
 
@@ -75,7 +68,7 @@ function CompanionsContent() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24">
-      {/* ================= NAVBAR ================= */}
+      {/* NAVBAR */}
       <nav className="sticky top-0 z-50 flex items-center justify-between bg-white px-8 py-4 shadow-sm border-b border-slate-100">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
@@ -92,7 +85,7 @@ function CompanionsContent() {
         </div>
       </nav>
 
-      {/* ================= HEADER & SEARCH ================= */}
+      {/* HEADER & SEARCH */}
       <div className="max-w-7xl mx-auto px-4 mt-12 mb-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -128,7 +121,7 @@ function CompanionsContent() {
         </div>
       </div>
 
-      {/* ================= COMPANION LIST ================= */}
+      {/* COMPANION LIST */}
       <main className="max-w-7xl mx-auto px-4">
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
